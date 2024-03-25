@@ -3,5 +3,5 @@
 Package with testing helpers
 
 #### TODO:
-- Server launcher
+- Server launcher - ***partially done***
 - Assertion helpers
