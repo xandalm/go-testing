@@ -8,6 +8,8 @@ import (
 )
 
 func output(t testing.TB, common string, out []any) {
+	t.Helper()
+
 	if len(out) == 0 {
 		t.Fatal(common)
 		return
