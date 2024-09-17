@@ -359,8 +359,8 @@ func TestNotContains(t *testing.T) {
 }
 
 func TestContainsFunc(t *testing.T) {
-	cmpFn := func(a int, b int) bool {
-		return a == b
+	cmpFn := func(elem int, lf int) bool {
+		return elem == lf
 	}
 	assertSuccess(t, "array contains the element", func(t testing.TB) {
 		assert.ContainsFunc(t, []int{1, 2, 3, 4, 5}, 3, cmpFn)
@@ -368,17 +368,35 @@ func TestContainsFunc(t *testing.T) {
 	assertFailure(t, "array doesn't contain the element", func(t testing.TB) {
 		assert.ContainsFunc(t, []int{1, 2, 3, 4, 5}, 0, cmpFn)
 	})
+	cmpPointerXFn := func(elem pointer, lf float64) bool {
+		return elem.X == lf
+	}
+	assertSuccess(t, "array of pointers contains pointer with specific x-axis value", func(t testing.TB) {
+		assert.ContainsFunc(t, []pointer{{0.44, 0.22}, {0.10, 0.25}}, 0.10, cmpPointerXFn)
+	})
+	assertFailure(t, "array of pointers doesn't contain pointer with specific x-axis value", func(t testing.TB) {
+		assert.ContainsFunc(t, []pointer{{0.44, 0.22}, {0.10, 0.25}}, 0.00, cmpPointerXFn)
+	})
 }
 
 func TestNotContainsFunc(t *testing.T) {
 	cmpFn := func(a int, b int) bool {
 		return a == b
 	}
-	assertSuccess(t, "array doesn't contains the element", func(t testing.TB) {
+	assertSuccess(t, "array doesn't contain the element", func(t testing.TB) {
 		assert.NotContainsFunc(t, []int{1, 2, 3, 4, 5}, 0, cmpFn)
 	})
 	assertFailure(t, "array contain the element", func(t testing.TB) {
 		assert.NotContainsFunc(t, []int{1, 2, 3, 4, 5}, 3, cmpFn)
+	})
+	cmpPointerXFn := func(elem pointer, lf float64) bool {
+		return elem.X == lf
+	}
+	assertSuccess(t, "array of pointers doesn't contain pointer with specific x-axis value", func(t testing.TB) {
+		assert.NotContainsFunc(t, []pointer{{0.44, 0.22}, {0.10, 0.25}}, 0.00, cmpPointerXFn)
+	})
+	assertFailure(t, "array of pointers contains pointer with specific x-axis value", func(t testing.TB) {
+		assert.NotContainsFunc(t, []pointer{{0.44, 0.22}, {0.10, 0.25}}, 0.10, cmpPointerXFn)
 	})
 }
 

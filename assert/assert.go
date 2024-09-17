@@ -203,7 +203,7 @@ func NotContains[T any, S []T](t testing.TB, s S, v T, out ...any) {
 	}
 }
 
-func ContainsFunc[T any, S []T](t testing.TB, s S, v T, fn func(T, T) bool, out ...any) {
+func ContainsFunc[A any, B any, S []A](t testing.TB, s S, v B, fn func(A, B) bool, out ...any) {
 	t.Helper()
 
 	for _, e := range s {
@@ -215,7 +215,7 @@ func ContainsFunc[T any, S []T](t testing.TB, s S, v T, fn func(T, T) bool, out 
 	output(t, common, out)
 }
 
-func NotContainsFunc[T any, S []T](t testing.TB, s S, v T, fn func(T, T) bool, out ...any) {
+func NotContainsFunc[A any, B any, S []A](t testing.TB, s S, v B, fn func(A, B) bool, out ...any) {
 	t.Helper()
 
 	for _, e := range s {
