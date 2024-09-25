@@ -309,13 +309,13 @@ func TestNotEqualFunc(t *testing.T) {
 func TestError(t *testing.T) {
 	var err error = errors.New("error")
 
-	assertSuccess(t, "identical error", func(t testing.TB) {
+	assertSuccess(t, "same error", func(t testing.TB) {
 		assert.Error(t, err, err)
 	})
 	assertSuccess(t, "both nil errors", func(t testing.TB) {
 		assert.Error(t, nil, nil)
 	})
-	assertFailure(t, "different error", func(t testing.TB) {
+	assertFailure(t, "different errors", func(t testing.TB) {
 		assert.Error(t, err, errors.New("other error"))
 	})
 	assertFailure(t, "error and nil error", func(t testing.TB) {
@@ -332,7 +332,7 @@ func TestNotError(t *testing.T) {
 	assertSuccess(t, "error and nil error", func(t testing.TB) {
 		assert.NotError(t, err, nil)
 	})
-	assertFailure(t, "identical error", func(t testing.TB) {
+	assertFailure(t, "same error", func(t testing.TB) {
 		assert.NotError(t, err, err)
 	})
 	assertFailure(t, "both nil errors", func(t testing.TB) {

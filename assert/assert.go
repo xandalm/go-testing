@@ -40,7 +40,8 @@ func isNil(v any) bool {
 func Nil(t testing.TB, v any, out ...any) {
 	t.Helper()
 	if !isNil(v) {
-		output(t, "expected nil value", out)
+		common := fmt.Sprintf("expected nil value, got %v", v)
+		output(t, common, out)
 	}
 }
 
@@ -140,7 +141,7 @@ func NotEqual[T any](t testing.TB, a, b T, out ...any) {
 	t.Helper()
 
 	if reflect.DeepEqual(a, b) {
-		common := fmt.Sprintf("don't want equal values, got %v and %v", a, b)
+		common := fmt.Sprintf("don't want equal values, but %v = %v", a, b)
 		output(t, common, out)
 	}
 }
@@ -149,7 +150,7 @@ func EqualFunc[T any](t testing.TB, a, b T, cmp func(T, T) bool, out ...any) {
 	t.Helper()
 
 	if !cmp(a, b) {
-		common := fmt.Sprintf("want equal values, got %v and want %v", a, b)
+		common := fmt.Sprintf("want similar values, but %v and %v are not", a, b)
 		output(t, common, out)
 	}
 }
@@ -158,7 +159,7 @@ func NotEqualFunc[T any](t testing.TB, a, b T, cmp func(T, T) bool, out ...any) 
 	t.Helper()
 
 	if cmp(a, b) {
-		common := fmt.Sprintf("don't want equal values, got %v and %v", a, b)
+		common := fmt.Sprintf("don't want similar values, but %v and %v are", a, b)
 		output(t, common, out)
 	}
 }
@@ -167,7 +168,7 @@ func Error(t testing.TB, got, want error, out ...any) {
 	t.Helper()
 
 	if got != want {
-		common := fmt.Sprintf("expected error %v, but didn't get it", want)
+		common := fmt.Sprintf("expected error %v, but got %v", want, got)
 		output(t, common, out)
 	}
 }
