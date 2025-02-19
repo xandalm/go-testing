@@ -298,11 +298,11 @@ func TestNotEqualFunc(t *testing.T) {
 	cmpFn := func(a, b int) bool {
 		return a == b
 	}
-	assertSuccess(t, "equal", func(t testing.TB) {
-		assert.NotEqualFunc(t, 1, 1, cmpFn)
-	})
-	assertFailure(t, "nonequal", func(t testing.TB) {
+	assertSuccess(t, "nonequal", func(t testing.TB) {
 		assert.NotEqualFunc(t, 1, 0, cmpFn)
+	})
+	assertFailure(t, "equal", func(t testing.TB) {
+		assert.NotEqualFunc(t, 1, 1, cmpFn)
 	})
 }
 

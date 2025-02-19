@@ -288,18 +288,21 @@ func Panics(t testing.TB, fn func(), out ...any) {
 	t.Helper()
 
 	defer func() {
+		t.Helper()
 		if recover() == nil {
 			output(t, "didn't panic", out)
 		}
 	}()
 
 	fn()
+
 }
 
 func NotPanics(t testing.TB, fn func(), out ...any) {
 	t.Helper()
 
 	defer func() {
+		t.Helper()
 		if r := recover(); r != nil {
 			common := fmt.Sprintf("did panic, %v", r)
 			output(t, common, out)
@@ -313,6 +316,7 @@ func PanicIs(t testing.TB, fn func(), exp any, out ...any) {
 	t.Helper()
 
 	defer func() {
+		t.Helper()
 		if r := recover(); r != exp {
 			common := fmt.Sprintf("can't get the expected panic, got %v", r)
 			output(t, common, out)
