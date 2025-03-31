@@ -538,3 +538,49 @@ func TestPanicIs(t *testing.T) {
 		}, "other panic")
 	})
 }
+
+func TestGreater(t *testing.T) {
+	assertSuccess(t, "when the first number is greater than second number", func(t testing.TB) {
+		assert.Greater(t, 1, -1)
+		assert.Greater(t, 1.2, -1.2)
+	})
+	assertFailure(t, "when the first number is smaller than second number", func(t testing.TB) {
+		assert.Greater(t, -1, 1)
+		assert.Greater(t, -1.5, 1.0)
+	})
+	assertFailure(t, "when the first number is equal to second number", func(t testing.TB) {
+		assert.Greater(t, 1, 1)
+	})
+	assertSuccess(t, "when the first string is greater than second string", func(t testing.TB) {
+		assert.Greater(t, "b", "a")
+	})
+	assertFailure(t, "when the first string is smaller than second string", func(t testing.TB) {
+		assert.Greater(t, "a", "b")
+	})
+	assertFailure(t, "when the first string is equal to second string", func(t testing.TB) {
+		assert.Greater(t, "a", "a")
+	})
+}
+
+func TestSmaller(t *testing.T) {
+	assertSuccess(t, "when the first number is smaller than second number", func(t testing.TB) {
+		assert.Smaller(t, -1, 1)
+		assert.Smaller(t, -1.2, 1.2)
+	})
+	assertFailure(t, "when the first number is greater than second number", func(t testing.TB) {
+		assert.Smaller(t, 1, -1)
+		assert.Smaller(t, 1.0, -1.5)
+	})
+	assertFailure(t, "when the first number is equal to second number", func(t testing.TB) {
+		assert.Greater(t, 1, 1)
+	})
+	assertSuccess(t, "when the first string is smaller than second string", func(t testing.TB) {
+		assert.Smaller(t, "a", "b")
+	})
+	assertFailure(t, "when the first string is greater than second string", func(t testing.TB) {
+		assert.Smaller(t, "b", "a")
+	})
+	assertFailure(t, "when the first string is equal to second string", func(t testing.TB) {
+		assert.Greater(t, "a", "a")
+	})
+}

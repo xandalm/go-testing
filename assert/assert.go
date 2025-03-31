@@ -1,6 +1,7 @@
 package assert
 
 import (
+	"cmp"
 	"fmt"
 	"iter"
 	"reflect"
@@ -348,4 +349,20 @@ func PanicIs(t testing.TB, fn func(), exp any, out ...any) {
 	}()
 
 	fn()
+}
+
+func Greater[T cmp.Ordered](t testing.TB, a, b T) {
+	t.Helper()
+
+	if a <= b {
+		t.Fatalf("%v is actually smaller than %v", a, b)
+	}
+}
+
+func Smaller[T cmp.Ordered](t testing.TB, a, b T) {
+	t.Helper()
+
+	if a >= b {
+		t.Fatalf("%v is actually greater than %v", a, b)
+	}
 }
