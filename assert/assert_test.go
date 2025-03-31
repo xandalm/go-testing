@@ -3,6 +3,7 @@ package assert_test
 import (
 	"errors"
 	"fmt"
+	"iter"
 	"testing"
 
 	"github.com/xandalm/go-testing/assert"
@@ -49,10 +50,18 @@ func assertFailure(t *testing.T, name string, fn func(t testing.TB)) {
 	})
 }
 
+type stubStruct[T any] struct {
+	V T
+}
+
 func TestNil(t *testing.T) {
 	var ptr *int
 	var err error
 	var fun func(v int)
+	var gen *stubStruct[int]
+	assertSuccess(t, "nil", func(t testing.TB) {
+		assert.Nil(t, nil)
+	})
 	assertSuccess(t, "nil pointer", func(t testing.TB) {
 		assert.Nil(t, ptr)
 	})
@@ -60,7 +69,7 @@ func TestNil(t *testing.T) {
 		assert.Nil(t, err)
 	})
 	assertSuccess(t, "nil func", func(t testing.TB) {
-		assert.Nil(t, fun)
+		assert.Nil(t, gen)
 	})
 	ptr = new(int)
 	err = errFoo
@@ -341,62 +350,108 @@ func TestNotError(t *testing.T) {
 }
 
 func TestContains(t *testing.T) {
-	assertSuccess(t, "array contains the element", func(t testing.TB) {
+	assertSuccess(t, "array containing the element", func(t testing.TB) {
 		assert.Contains(t, []int{1, 2, 3, 4, 5}, 3)
 	})
-	assertFailure(t, "array doesn't contain the element", func(t testing.TB) {
+	assertFailure(t, "array not containing the element", func(t testing.TB) {
 		assert.Contains(t, []int{1, 2, 3, 4, 5}, 0)
+	})
+	assertSuccess(t, "string containing the substring", func(t testing.TB) {
+		assert.Contains(t, "abcdef", "cd")
+	})
+	assertFailure(t, "string not containing the substring", func(t testing.TB) {
+		assert.Contains(t, "abcdef", "ce")
+	})
+	iter := func() iter.Seq[stubStruct[int]] {
+		return func(yield func(stubStruct[int]) bool) {
+			for i := range 10 {
+				if !yield(stubStruct[int]{i}) {
+					return
+				}
+			}
+		}
+	}
+	assertSuccess(t, "iterable containing the element", func(t testing.TB) {
+		assert.Contains(t, iter(), stubStruct[int]{5})
+	})
+	assertFailure(t, "iterable not containing the element", func(t testing.TB) {
+		assert.Contains(t, iter(), stubStruct[int]{-1})
 	})
 }
 
 func TestNotContains(t *testing.T) {
-	assertSuccess(t, "array doesn't contains the element", func(t testing.TB) {
+	assertSuccess(t, "array not containing the element", func(t testing.TB) {
 		assert.NotContains(t, []int{1, 2, 3, 4, 5}, 0)
 	})
-	assertFailure(t, "array contain the element", func(t testing.TB) {
+	assertFailure(t, "array containing the element", func(t testing.TB) {
 		assert.NotContains(t, []int{1, 2, 3, 4, 5}, 3)
+	})
+	assertSuccess(t, "string not containing the substring", func(t testing.TB) {
+		assert.NotContains(t, "abcdef", "ce")
+	})
+	assertFailure(t, "string containing the substring", func(t testing.TB) {
+		assert.NotContains(t, "abcdef", "cd")
+	})
+	iter := func() iter.Seq[stubStruct[int]] {
+		return func(yield func(stubStruct[int]) bool) {
+			for i := range 10 {
+				if !yield(stubStruct[int]{i}) {
+					return
+				}
+			}
+		}
+	}
+	assertSuccess(t, "iterable not containing the element", func(t testing.TB) {
+		assert.NotContains(t, iter(), stubStruct[int]{-1})
+	})
+	assertFailure(t, "iterable containing the element", func(t testing.TB) {
+		assert.NotContains(t, iter(), stubStruct[int]{5})
 	})
 }
 
 func TestContainsFunc(t *testing.T) {
-	cmpFn := func(elem int, lf int) bool {
-		return elem == lf
-	}
 	assertSuccess(t, "array contains the element", func(t testing.TB) {
-		assert.ContainsFunc(t, []int{1, 2, 3, 4, 5}, 3, cmpFn)
+		assert.ContainsFunc(t, []int{1, 2, 3, 4, 5}, func(e int) bool {
+			return e == 3
+		})
 	})
 	assertFailure(t, "array doesn't contain the element", func(t testing.TB) {
-		assert.ContainsFunc(t, []int{1, 2, 3, 4, 5}, 0, cmpFn)
+		assert.ContainsFunc(t, []int{1, 2, 3, 4, 5}, func(e int) bool {
+			return e == 0
+		})
 	})
-	cmpPointerXFn := func(elem pointer, lf float64) bool {
-		return elem.X == lf
-	}
 	assertSuccess(t, "array of pointers contains pointer with specific x-axis value", func(t testing.TB) {
-		assert.ContainsFunc(t, []pointer{{0.44, 0.22}, {0.10, 0.25}}, 0.10, cmpPointerXFn)
+		assert.ContainsFunc(t, []pointer{{0.44, 0.22}, {0.10, 0.25}}, func(e pointer) bool {
+			return e.X == 0.10
+		})
 	})
 	assertFailure(t, "array of pointers doesn't contain pointer with specific x-axis value", func(t testing.TB) {
-		assert.ContainsFunc(t, []pointer{{0.44, 0.22}, {0.10, 0.25}}, 0.00, cmpPointerXFn)
+		assert.ContainsFunc(t, []pointer{{0.44, 0.22}, {0.10, 0.25}}, func(e pointer) bool {
+			return e.X == 0.00
+		})
 	})
 }
 
 func TestNotContainsFunc(t *testing.T) {
-	cmpFn := func(a int, b int) bool {
-		return a == b
-	}
 	assertSuccess(t, "array doesn't contain the element", func(t testing.TB) {
-		assert.NotContainsFunc(t, []int{1, 2, 3, 4, 5}, 0, cmpFn)
+		assert.NotContainsFunc(t, []int{1, 2, 3, 4, 5}, func(e int) bool {
+			return e == 0
+		})
 	})
 	assertFailure(t, "array contain the element", func(t testing.TB) {
-		assert.NotContainsFunc(t, []int{1, 2, 3, 4, 5}, 3, cmpFn)
+		assert.NotContainsFunc(t, []int{1, 2, 3, 4, 5}, func(e int) bool {
+			return e == 3
+		})
 	})
-	cmpPointerXFn := func(elem pointer, lf float64) bool {
-		return elem.X == lf
-	}
 	assertSuccess(t, "array of pointers doesn't contain pointer with specific x-axis value", func(t testing.TB) {
-		assert.NotContainsFunc(t, []pointer{{0.44, 0.22}, {0.10, 0.25}}, 0.00, cmpPointerXFn)
+		assert.NotContainsFunc(t, []pointer{{0.44, 0.22}, {0.10, 0.25}}, func(e pointer) bool {
+			return e.X == 0.00
+		})
 	})
 	assertFailure(t, "array of pointers contains pointer with specific x-axis value", func(t testing.TB) {
-		assert.NotContainsFunc(t, []pointer{{0.44, 0.22}, {0.10, 0.25}}, 0.10, cmpPointerXFn)
+		assert.NotContainsFunc(t, []pointer{{0.44, 0.22}, {0.10, 0.25}}, func(e pointer) bool {
+			return e.X == 0.10
+		})
 	})
 }
 
@@ -433,24 +488,6 @@ func TestHasNoSuffix(t *testing.T) {
 	})
 	assertFailure(t, "string ends with the given string", func(t testing.TB) {
 		assert.HasNoSuffix(t, "nice to meet you", "you")
-	})
-}
-
-func TestHasSubString(t *testing.T) {
-	assertSuccess(t, "string contains the substring", func(t testing.TB) {
-		assert.HasSubString(t, "nice to meet you", "meet")
-	})
-	assertFailure(t, "string doesn't contain the substring", func(t testing.TB) {
-		assert.HasSubString(t, "nice to meet you", "world")
-	})
-}
-
-func TestHasNoSubString(t *testing.T) {
-	assertSuccess(t, "string doesn't contain the substring", func(t testing.TB) {
-		assert.HasNoSubString(t, "nice to meet you", "buddy")
-	})
-	assertFailure(t, "string contains the substring", func(t testing.TB) {
-		assert.HasNoSubString(t, "nice to meet you", "you")
 	})
 }
 

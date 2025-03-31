@@ -2,6 +2,7 @@ package assert
 
 import (
 	"fmt"
+	"iter"
 	"reflect"
 	"strings"
 	"testing"
@@ -18,7 +19,7 @@ func output(t testing.TB, common string, out []any) {
 		t.Fatalf(str, out[1:]...)
 		return
 	}
-	panic("assert: output argument must be a fmt string")
+	panic("assert: output argument must be a format string and its args")
 }
 
 func isNil(v any) bool {
@@ -132,7 +133,7 @@ func Equal[T any](t testing.TB, a, b T, out ...any) {
 	t.Helper()
 
 	if !reflect.DeepEqual(a, b) {
-		common := fmt.Sprintf("want equal values, got %v and want %v", a, b)
+		common := fmt.Sprintf("expected equal values, but got %v and %v", a, b)
 		output(t, common, out)
 	}
 }
@@ -141,7 +142,7 @@ func NotEqual[T any](t testing.TB, a, b T, out ...any) {
 	t.Helper()
 
 	if reflect.DeepEqual(a, b) {
-		common := fmt.Sprintf("don't want equal values, but %v = %v", a, b)
+		common := fmt.Sprintf("expected different values, but %v is equal to %v ", a, b)
 		output(t, common, out)
 	}
 }
@@ -150,7 +151,7 @@ func EqualFunc[T any](t testing.TB, a, b T, cmp func(T, T) bool, out ...any) {
 	t.Helper()
 
 	if !cmp(a, b) {
-		common := fmt.Sprintf("want similar values, but %v and %v are not", a, b)
+		common := fmt.Sprintf("%v and %v can't be the same accordingly to comparator", a, b)
 		output(t, common, out)
 	}
 }
@@ -159,7 +160,7 @@ func NotEqualFunc[T any](t testing.TB, a, b T, cmp func(T, T) bool, out ...any) 
 	t.Helper()
 
 	if cmp(a, b) {
-		common := fmt.Sprintf("don't want similar values, but %v and %v are", a, b)
+		common := fmt.Sprintf("%v and %v are the same accordingly to comparator", a, b)
 		output(t, common, out)
 	}
 }
@@ -182,51 +183,92 @@ func NotError(t testing.TB, got, nwant error, out ...any) {
 	}
 }
 
-func Contains[T any, S []T](t testing.TB, s S, v T, out ...any) {
-	t.Helper()
-
-	for _, e := range s {
-		if reflect.DeepEqual(e, v) {
-			return
-		}
-	}
-	common := fmt.Sprintf("there's no %v in %v", v, s)
-	output(t, common, out)
+type StringOrSet[T comparable] interface {
+	string | Set[T]
 }
 
-func NotContains[T any, S []T](t testing.TB, s S, v T, out ...any) {
+func contains[T comparable, S StringOrSet[T]](s S, lf T) bool {
+	valS := reflect.ValueOf(s)
+	var collec iter.Seq[T]
+	switch valS.Kind() {
+	case reflect.String:
+		return strings.Contains(valS.String(), reflect.ValueOf(lf).String())
+	case reflect.Func:
+		collec = valS.Interface().(iter.Seq[T])
+	default:
+		collec = func(yield func(T) bool) {
+			for i := range valS.Len() {
+				if !yield(valS.Index(i).Interface().(T)) {
+					return
+				}
+			}
+		}
+	}
+	for v := range collec {
+		if v == lf {
+			return true
+		}
+	}
+	return false
+}
+
+func Contains[T comparable, S StringOrSet[T]](t testing.TB, s S, lf T, out ...any) {
 	t.Helper()
 
-	for _, e := range s {
-		if reflect.DeepEqual(e, v) {
-			common := fmt.Sprintf("there's %v in %v", v, s)
-			output(t, common, out)
-			return
-		}
+	if !contains(s, lf) {
+		common := fmt.Sprintf("%v isn't in the collection", lf)
+		output(t, common, out)
 	}
 }
 
-func ContainsFunc[A any, B any, S []A](t testing.TB, s S, v B, fn func(A, B) bool, out ...any) {
+func NotContains[T comparable, S StringOrSet[T]](t testing.TB, s S, lf T, out ...any) {
 	t.Helper()
 
-	for _, e := range s {
-		if fn(e, v) {
-			return
-		}
+	if contains(s, lf) {
+		common := fmt.Sprintf("%v is in the collection", lf)
+		output(t, common, out)
 	}
-	common := fmt.Sprintf("there's no %v in %v", v, s)
-	output(t, common, out)
 }
 
-func NotContainsFunc[A any, B any, S []A](t testing.TB, s S, v B, fn func(A, B) bool, out ...any) {
+type Set[T any] interface {
+	[]T | iter.Seq[T]
+}
+
+func containsFunc[T any, S Set[T]](s S, cmp func(v T) bool) bool {
+	var collec iter.Seq[T]
+	valS := reflect.ValueOf(s)
+	if valS.Kind() == reflect.Func {
+		collec = valS.Interface().(iter.Seq[T])
+	} else {
+		collec = func(yield func(T) bool) {
+			for i := range valS.Len() {
+				if !yield(valS.Index(i).Interface().(T)) {
+					return
+				}
+			}
+		}
+	}
+	for v := range collec {
+		if cmp(v) {
+			return true
+		}
+	}
+	return false
+}
+
+func ContainsFunc[T any, S Set[T]](t testing.TB, s S, cmp func(T) bool, out ...any) {
 	t.Helper()
 
-	for _, e := range s {
-		if fn(e, v) {
-			common := fmt.Sprintf("there's %v in %v", v, s)
-			output(t, common, out)
-			return
-		}
+	if !containsFunc(s, cmp) {
+		output(t, "there's no correspondence accordingly to comparator", out)
+	}
+}
+
+func NotContainsFunc[T any, S Set[T]](t testing.TB, s S, cmp func(T) bool, out ...any) {
+	t.Helper()
+
+	if containsFunc(s, cmp) {
+		output(t, "there's correspondence accordingly to comparator", out)
 	}
 }
 
@@ -262,24 +304,6 @@ func HasNoSuffix(t testing.TB, s string, sfx string, out ...any) {
 
 	if strings.HasSuffix(s, sfx) {
 		common := fmt.Sprintf("the %q can be a suffix of the %q", sfx, s)
-		output(t, common, out)
-	}
-}
-
-func HasSubString(t testing.TB, s string, sub string, out ...any) {
-	t.Helper()
-
-	if !strings.Contains(s, sub) {
-		common := fmt.Sprintf("the %q cannot be a substring of the %q", sub, s)
-		output(t, common, out)
-	}
-}
-
-func HasNoSubString(t testing.TB, s string, sub string, out ...any) {
-	t.Helper()
-
-	if strings.Contains(s, sub) {
-		common := fmt.Sprintf("the %q can be a substring of the %q", sub, s)
 		output(t, common, out)
 	}
 }
