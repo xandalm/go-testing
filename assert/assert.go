@@ -130,10 +130,19 @@ func False(t testing.TB, got bool, out ...any) {
 	}
 }
 
+func isEqual[T any](a, b T) bool {
+	valA := reflect.ValueOf(a)
+	if valA.Kind() == reflect.Func {
+		valB := reflect.ValueOf(b)
+		return valB.Kind() == reflect.Func && valA.Pointer() == valB.Pointer()
+	}
+	return reflect.DeepEqual(a, b)
+}
+
 func Equal[T any](t testing.TB, a, b T, out ...any) {
 	t.Helper()
 
-	if !reflect.DeepEqual(a, b) {
+	if !isEqual(a, b) {
 		common := fmt.Sprintf("expected equal values, but got %v and %v", a, b)
 		output(t, common, out)
 	}
@@ -142,7 +151,7 @@ func Equal[T any](t testing.TB, a, b T, out ...any) {
 func NotEqual[T any](t testing.TB, a, b T, out ...any) {
 	t.Helper()
 
-	if reflect.DeepEqual(a, b) {
+	if isEqual(a, b) {
 		common := fmt.Sprintf("expected different values, but %v is equal to %v ", a, b)
 		output(t, common, out)
 	}

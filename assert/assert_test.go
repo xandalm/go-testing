@@ -231,6 +231,16 @@ type pointer struct {
 	X, Y float64
 }
 
+func dummyFunc() {
+	a := 1
+	b := 2
+	fmt.Println(a, b)
+	a = a ^ b
+	b = a ^ b
+	a = a ^ b
+	fmt.Println(a, b)
+}
+
 func TestEqual(t *testing.T) {
 	assertSuccess(t, "equal numbers", func(t testing.TB) {
 		assert.Equal(t, 1, 1)
@@ -247,6 +257,12 @@ func TestEqual(t *testing.T) {
 	assertSuccess(t, "equal structs", func(t testing.TB) {
 		assert.Equal(t, pointer{0.55, 0.75}, pointer{0.55, 0.75})
 	})
+	assertSuccess(t, "equal functions", func(t testing.TB) {
+		assert.Equal(t, dummyFunc, dummyFunc)
+	})
+	assertSuccess(t, "equal errors", func(t testing.TB) {
+		assert.Equal(t, errFoo, errFoo)
+	})
 	assertFailure(t, "nonequal numbers", func(t testing.TB) {
 		assert.Equal(t, 1, 2)
 	})
@@ -258,6 +274,14 @@ func TestEqual(t *testing.T) {
 	})
 	assertFailure(t, "nonequal structs", func(t testing.TB) {
 		assert.Equal(t, pointer{0.55, 0.75}, pointer{1, 1})
+	})
+	assertFailure(t, "nonequal functions", func(t testing.TB) {
+		assert.Equal(t, dummyFunc, func() {
+			fmt.Println("Hello World!")
+		})
+	})
+	assertFailure(t, "nonequal errors", func(t testing.TB) {
+		assert.Equal(t, errFoo, errors.New("another error"))
 	})
 }
 
@@ -274,6 +298,14 @@ func TestNotEqual(t *testing.T) {
 	assertSuccess(t, "nonequal structs", func(t testing.TB) {
 		assert.NotEqual(t, pointer{0.55, 0.75}, pointer{1, 1})
 	})
+	assertSuccess(t, "nonequal functions", func(t testing.TB) {
+		assert.NotEqual(t, dummyFunc, func() {
+			fmt.Println("Hello World!")
+		})
+	})
+	assertSuccess(t, "nonequal errors", func(t testing.TB) {
+		assert.NotEqual(t, errFoo, errors.New("another error"))
+	})
 	assertFailure(t, "equal numbers", func(t testing.TB) {
 		assert.NotEqual(t, 1, 1)
 	})
@@ -288,6 +320,12 @@ func TestNotEqual(t *testing.T) {
 	})
 	assertFailure(t, "equal structs", func(t testing.TB) {
 		assert.NotEqual(t, pointer{0.55, 0.75}, pointer{0.55, 0.75})
+	})
+	assertFailure(t, "equal functions", func(t testing.TB) {
+		assert.NotEqual(t, dummyFunc, dummyFunc)
+	})
+	assertFailure(t, "equal errors", func(t testing.TB) {
+		assert.NotEqual(t, errFoo, errFoo)
 	})
 }
 
