@@ -157,7 +157,7 @@ func NotEqual[T any](t testing.TB, a, b T, out ...any) {
 	}
 }
 
-func EqualFunc[T any](t testing.TB, a, b T, cmp func(T, T) bool, out ...any) {
+func EqualFunc[A, B any](t testing.TB, a A, b B, cmp func(A, B) bool, out ...any) {
 	t.Helper()
 
 	if !cmp(a, b) {
@@ -166,7 +166,7 @@ func EqualFunc[T any](t testing.TB, a, b T, cmp func(T, T) bool, out ...any) {
 	}
 }
 
-func NotEqualFunc[T any](t testing.TB, a, b T, cmp func(T, T) bool, out ...any) {
+func NotEqualFunc[A, B any](t testing.TB, a A, b B, cmp func(A, B) bool, out ...any) {
 	t.Helper()
 
 	if cmp(a, b) {
@@ -244,40 +244,40 @@ type Set[T any] interface {
 	[]T | iter.Seq[T]
 }
 
-func containsFunc[T any, S Set[T]](s S, cmp func(v T) bool) bool {
-	var collec iter.Seq[T]
+func containsFunc[A, B any, S Set[A]](s S, lf B, cmp func(A, B) bool) bool {
+	var collec iter.Seq[A]
 	valS := reflect.ValueOf(s)
 	if valS.Kind() == reflect.Func {
-		collec = valS.Interface().(iter.Seq[T])
+		collec = valS.Interface().(iter.Seq[A])
 	} else {
-		collec = func(yield func(T) bool) {
+		collec = func(yield func(A) bool) {
 			for i := range valS.Len() {
-				if !yield(valS.Index(i).Interface().(T)) {
+				if !yield(valS.Index(i).Interface().(A)) {
 					return
 				}
 			}
 		}
 	}
 	for v := range collec {
-		if cmp(v) {
+		if cmp(v, lf) {
 			return true
 		}
 	}
 	return false
 }
 
-func ContainsFunc[T any, S Set[T]](t testing.TB, s S, cmp func(T) bool, out ...any) {
+func ContainsFunc[A, B any, S Set[A]](t testing.TB, s S, lf B, cmp func(A, B) bool, out ...any) {
 	t.Helper()
 
-	if !containsFunc(s, cmp) {
+	if !containsFunc(s, lf, cmp) {
 		output(t, "there's no correspondence accordingly to comparator", out)
 	}
 }
 
-func NotContainsFunc[T any, S Set[T]](t testing.TB, s S, cmp func(T) bool, out ...any) {
+func NotContainsFunc[A, B any, S Set[A]](t testing.TB, s S, lf B, cmp func(A, B) bool, out ...any) {
 	t.Helper()
 
-	if containsFunc(s, cmp) {
+	if containsFunc(s, lf, cmp) {
 		output(t, "there's correspondence accordingly to comparator", out)
 	}
 }
